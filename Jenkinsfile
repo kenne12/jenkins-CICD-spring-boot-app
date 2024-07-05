@@ -32,7 +32,7 @@ pipeline {
 
         stage('SonarCloud analysis') {
             environment {
-                SONAR_URL = "http://localhost:9000"
+                SONAR_URL = "http://192.168.1.7:9000"
             }
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
