@@ -13,6 +13,7 @@ pipeline {
         HOSTNAME_DEPLOY_STAGING = "192.168.1.7"
         IMAGE_NAME= 'paymybuddy'
         IMAGE_TAG= 'latest'
+        SCANNER_HOME= tool 'sonar-server'
     }
 
     stages {
@@ -30,9 +31,12 @@ pipeline {
         }
 
         stage('SonarCloud analysis') {
+            environment {
+                SONAR_URL = "http://localhost:9000"
+            }
             steps {
-                withSonarQubeEnv('SonarCloudServer') {
-                    sh 'mvn sonar:sonar -s .m2/settings.xml'
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
                 }
             }
         }
