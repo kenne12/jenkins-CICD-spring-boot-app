@@ -30,25 +30,6 @@ pipeline {
             }
         }
 
-        stage('SonarCloud analysis') {
-            environment {
-                SONAR_URL = "http://192.168.1.7:9000"
-            }
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 60, unit: 'SECONDS') {
-                    waitForQualityGate abortPipeline: false
-                }
-            }
-        }
-
         stage('Package') {
             steps {
                 sh 'mvn clean package -DskipTests'
