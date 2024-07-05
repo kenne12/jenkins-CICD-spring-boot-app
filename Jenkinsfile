@@ -7,10 +7,10 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_AUTH = credentials('DockerHubCredentials')
+        DOCKERHUB_AUTH = credentials('docker-credentials')
         MYSQL_AUTH= credentials('MYSQL_AUTH')
-        HOSTNAME_DEPLOY_PROD = "20.115.44.142"
-        HOSTNAME_DEPLOY_STAGING = "20.115.42.32"
+        HOSTNAME_DEPLOY_PROD = "192.168.1.10"
+        HOSTNAME_DEPLOY_STAGING = "192.168.1.7"
         IMAGE_NAME= 'paymybuddy'
         IMAGE_TAG= 'latest'
     }
@@ -63,14 +63,14 @@ pipeline {
 
         stage ('Deploy in staging') {
             when {
-                expression { GIT_BRANCH == 'origin/main' }
+                expression { GIT_BRANCH == 'origin/develop' }
             }
             steps {
                 sshagent(credentials: ['SSH_AUTH_SERVER']) { 
                     sh '''
                         [ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0700 ~/.ssh
                         ssh-keyscan -t rsa,dsa ${HOSTNAME_DEPLOY_STAGING} >> ~/.ssh/known_hosts
-                        scp -r deploy centos@${HOSTNAME_DEPLOY_STAGING}:/home/centos/
+                        scp -r deploy ubuntu@${HOSTNAME_DEPLOY_STAGING}:/home/ubuntu/
                         command1="cd deploy && echo ${DOCKERHUB_AUTH_PSW} | docker login -u ${DOCKERHUB_AUTH_USR} --password-stdin"
                         command2="echo 'IMAGE_VERSION=${DOCKERHUB_AUTH_USR}/${IMAGE_NAME}:${IMAGE_TAG}' > .env && echo ${MYSQL_AUTH_PSW} > secrets/db_password.txt && echo ${MYSQL_AUTH_USR} > secrets/db_user.txt"
                         command3="echo 'SPRING_DATASOURCE_URL=jdbc:mysql://paymybuddydb:3306/db_paymybuddy' > env/paymybuddy.env && echo 'SPRING_DATASOURCE_PASSWORD=${MYSQL_AUTH_PSW}' >> env/paymybuddy.env && echo 'SPRING_DATASOURCE_USERNAME=${MYSQL_AUTH_USR}' >> env/paymybuddy.env"
@@ -111,7 +111,7 @@ pipeline {
                     sh '''
                         [ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0700 ~/.ssh
                         ssh-keyscan -t rsa,dsa ${HOSTNAME_DEPLOY_PROD} >> ~/.ssh/known_hosts
-                        scp -r deploy centos@${HOSTNAME_DEPLOY_PROD}:/home/centos/
+                        scp -r deploy kenne@${HOSTNAME_DEPLOY_PROD}:/home/kenne/
                         command1="cd deploy && echo ${DOCKERHUB_AUTH_PSW} | docker login -u ${DOCKERHUB_AUTH_USR} --password-stdin"
                         command2="echo 'IMAGE_VERSION=${DOCKERHUB_AUTH_USR}/${IMAGE_NAME}:${IMAGE_TAG}' > .env && echo ${MYSQL_AUTH_PSW} > secrets/db_password.txt && echo ${MYSQL_AUTH_USR} > secrets/db_user.txt"
                         command3="echo 'SPRING_DATASOURCE_URL=jdbc:mysql://paymybuddydb:3306/db_paymybuddy' > env/paymybuddy.env && echo 'SPRING_DATASOURCE_PASSWORD=${MYSQL_AUTH_PSW}' >> env/paymybuddy.env && echo 'SPRING_DATASOURCE_USERNAME=${MYSQL_AUTH_USR}' >> env/paymybuddy.env"
